@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Working SaltStack master that is running at least version 2017.7.1
+- Working SaltStack master that is running at least version 2018.3.0
 - Virtual or physical hardware to run component servers
 - Basic knowledge of SaltStack. Mainly configuring pillars and applying states.
 
@@ -22,6 +22,7 @@
 - [OpenVPN](https://openvpn.net/)
 - [Grafana](https://grafana.com/)
 - [InfluxDB](https://www.influxdata.com/)
+- [Telegraf](https://www.influxdata.com/time-series-platform/telegraf/)
 - [Nginx](https://nginx.org/en/)
 
 ## Installation
@@ -38,10 +39,13 @@
     - reactor.sign_crt
     - reactor.vpn
 
-1. Configure pillar values if needed
-    - At minimum you should generate a hash for the first user in pillar/central/init.sls.
+By default states should be placed in `/srv/salt` and pillar files in `/srv/pillar`.
 
-1. In the master configuration, define reactor events:
+1. Configure pillar values. At a minimum> 
+    - You should generate a hash for the first user in pillar/central/init.sls.
+    - You should fix all of the example.com hostnames to actually point to your hosts.
+
+1. In the master configuration, define [reactor events](https://docs.saltstack.com/en/latest/topics/reactor/):
 
     ```yaml
     reactor:
@@ -57,7 +61,6 @@
     - central.s4a.cert.ee
     - influx.s4.cert.ee
     - vpn.s4a.cert.ee
-    - keys.s4a.cert.ee
     - es.s4a.cert.ee
     - repo.s4a.cert.ee
 
@@ -74,8 +77,6 @@
       - detector
     'vpn.s4a.cert.ee':
       - vpn
-    'keys.s4a.cert.ee':
-      - sks
     ```
 
 1. Define sls top file definitions:
@@ -91,8 +92,6 @@
       - influx
     'vpn.s4a.cert.ee':
       - vpn
-    'keys.s4a.cert.ee':
-      - sks.config
     'repo.s4a.cert.ee':
       - repo
     ```
