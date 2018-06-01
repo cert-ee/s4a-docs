@@ -131,3 +131,146 @@
     ```
 
 1. Done
+
+## Manual install
+
+This will walk you through installing the central side manually.
+The guide assumes the use of two machines. One machine for the APT repository. Second one that will host central components, elasticsearch, evebox, influx, openvpn.
+
+**Note! Double curly brackets are used to inidicate values that should be replaced.**
+
+### Repo server installation
+
+1. Install reprepro
+
+  ```bash
+  sudo apt-get update && apt-get install reprepro
+  mkdir -p /srv/{{ fqdn }}/repositories
+  mkdir -p /srv/{{ fqdn }}/repositories/conf
+  ```
+
+1. Grab template files from https://github.com/cert-ee/s4a/tree/master/saltstack/salt/repo/files/repo/conf
+ Place these files in the previously created mkdir -p /srv/{{ fqdn }}/repositories/conf
+ directory and configure them to suit your needs
+
+1. Install and configure nginx. You can find a template config file at:
+  https://github.com/cert-ee/s4a/blob/master/saltstack/salt/repo/files/nginx.conf
+
+### Central server installation
+
+1. Configure repositorys and install packages for dependencies, elasticsearch and S4A central
+
+    ```bash
+    # Add elasticsearch
+    wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+    echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-5.x.list
+
+    # Add MongoDB
+    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
+    echo "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.4.list
+
+    # Add NodeJS
+    curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+
+    # Add yarn
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+
+    # Add S4A repo
+    curl -sL https://{{ Path to your repo key }} | sudo apt-key add -
+    echo "deb [trusted=yes arch=amd64] https://{{ salt['pillar.get']('detector:repo') }}/ xenial universe"
+
+    # Add Oracle java
+    sudo add-apt-repository ppa:webupd8team/java
+
+    # Refresh pacakge repos and install dependencies
+    sudo apt-get update
+    sudo apt-get install apt-transport-https python-software-properties wget curl
+    sudo apt-get install oracle-java8-installer
+    sudo apt-get install elasticsearch
+    sudo apt-get install -y mongodb-org
+    sudo apt-get install -y nodejs
+    sudo apt-get install yarn
+    sudo apt-get install s4a-central
+
+    # Configure limits
+    cat <<EOF >> /etc/security/limits.conf
+    elasticsearch - nofile 65535
+    elasticsearch - memlock unlimited
+    root - memlock unlimited
+    EOF
+
+    # Set sysctl values. You should also configure these in /etc/sysctl.conf
+    sysctl vm.swappiness=0
+    sysctl vm.max_map_count=262144
+
+    ```
+
+1. Install evebox
+
+    ```bash
+    sudo add-apt-repository ppa:longsleep/golang-backports
+
+    wget -qO - https://evebox.org/files/GPG-KEY-evebox | sudo apt-key add -
+    echo "deb http://files.evebox.org/evebox/debian stable main" | sudo tee /etc/apt/sources.list.d/evebox.list
+
+    sudo apt-get update
+    sudo apt-get install git golang-go evebox
+    ```
+
+    1. Download GeoLite2-City from: http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz and extract it  to `/etc/evebox/`
+
+    1. Configure an elasticsearch template for Evebox. Sample here:  https://github.com/cert-ee/s4a/blob/master/saltstack/salt/central/files/evebox/elasticsearch-template-es5x.json
+
+    1. Configure the following files:
+        - `/etc/evebox/evebox.yaml`
+        - `/etc/evebox/agent.yaml`
+        - `/etc/default/evebox`
+
+        Templates for these files can be found here: https://github.com/cert-ee/s4a/tree/master/saltstack/salt/central/files/evebox
+
+    1. Ensure evebox and evebox-agent services are running
+
+1. Nginx as a reverse proxy
+
+    1. Install packages
+
+        ```bash
+        sudo apt-get update && apt-get install nginx php-fpm
+        ```
+
+    1. Obtain a Let's Encrypt or another SSL certificate
+
+    1. Configure nginx per the templates at:  https://github.com/cert-ee/s4a/tree/master/saltstack/salt/central/files/nginx
+
+    1. Create users at: `/etc/nginx/.htpasswd`
+
+1. Deploy OpenVPN server
+
+    **NB! Manual install with no SaltStack means that OpenVPN certificates will need manual signing**
+
+    1. `sudo apt-get update && sudo apt-get install openvpn`
+
+    1. Configure OpenVPN based on template files: `https://github.com/cert-ee/s4a/tree/master/saltstack/salt/vpn/files`
+
+    The OpenVPN documentation is pretty good: https://openvpn.net/index.php/open-source/documentation/howto.html#config.
+    Use the "subnet" topology when setting up.
+
+1. Optionally add InfluxDB and Grafana
+
+    ```bash
+    # Add InfluxDB
+    curl -sL https://repos.influxdata.com/influxdb.key | sudo apt-key add -
+    source /etc/lsb-release
+    echo "deb https://repos.influxdata.com/${DISTRIB_ID,,} ${DISTRIB_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+    sudo apt-get update
+    sudo apt-get install influxdb
+    sudo systemctl start influxdb
+
+    # Add Grafana
+    curl -sL https://packagecloud.io/gpg.key | sudo apt-key add -
+    echo "deb https://packagecloud.io/grafana/stable/debian/ jessie main" | sudo tee /etc/apt/sources.list.d/grafana.list
+    sudo apt-get update && sudo apt-get install grafana
+    sudo systemctl start grafana-server
+    ```
+1. Profit!
