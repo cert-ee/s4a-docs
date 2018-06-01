@@ -250,6 +250,8 @@ The guide assumes the use of two machines. One machine for the APT repository. S
 
     1. `sudo apt-get update && sudo apt-get install openvpn`
 
+    1. Create keys and certificates with the included easy-rsa package. Refer to the official OpenVPN install guide linked below. 
+
     1. Configure OpenVPN based on template files: `https://github.com/cert-ee/s4a/tree/master/saltstack/salt/vpn/files`
 
     The OpenVPN documentation is pretty good: https://openvpn.net/index.php/open-source/documentation/howto.html#config.
