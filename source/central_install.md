@@ -27,13 +27,14 @@
 
 ## Installation
 
+**Note! Double curly brackets are used to inidicate values that should be replaced.**
+
 1. Ensure pillar definitions and state files for all components are present on the server. These can be found at [S4A repository](https://github.com/cert-ee/s4a). These include:
     - central
     - influx/grafana/telegraf
     - vpn
     - detector.elastic
     - nginx
-    - sks
     - repo
     - mongodb
     - reactor.sign_crt
@@ -47,6 +48,8 @@ By default states should be placed in `/srv/salt` and pillar files in `/srv/pill
 
 1. In the master configuration, define [reactor events](https://docs.saltstack.com/en/latest/topics/reactor/):
 
+    - By default this should be put in either `/etc/salt/master`, or `/etc/salt/master.d/reactor.conf`. More info at the reactor events link above.
+    
     ```yaml
     reactor:
       - 'vpn/s4a/serial':
@@ -57,76 +60,79 @@ By default states should be placed in `/srv/salt` and pillar files in `/srv/pill
 
     **NB! The second beacon definition matches on inotify beacon events for that specific folder, so make sure that the beacon is defined in pillar and assigned to central and that the path reflects the path set in openvpn pillar.**
 
-1. Set up virtual machines, either with salt-cloud or manually:
-    - central.s4a.cert.ee
-    - influx.s4.cert.ee
-    - vpn.s4a.cert.ee
-    - es.s4a.cert.ee
-    - repo.s4a.cert.ee
+1. Next up, we need to provision some virtual machines where to run the various central services. In case of a working [salt-cloud](https://docs.saltstack.com/en/latest/topics/cloud/) setup, you can use that. If provisioning manually, make sure to also add these machines as minions to your salt-master:
+    - central.s4a.{{ example.com }}
+    - influx.s4.{{ example.com }}
+    - vpn.s4a.{{ example.com }}
+    - es.s4a.{{ example.com }}
+    - repo.s4a.{{ example.com }}
 
+    - Single host central deployments are also possible, but currently untested. This will require significant modifications to the top file definitions.
+    - The machine names are arbitrary but if using other names, make sure to change them in the top.sls files and highstate commands as well.
+    
     **Template top file definitions are also included in the GitHub repository.**
-1. Define pillar top file definitions:
+1. Define pillar top file definitions, by default `/srv/pillar/top.sls`:
 
     ```yaml
     '*':
       - detector
-    'central.s4a.cert.ee':
+    'central.s4a.{{ example.com }}':
       - vpn
       - beacons
       - central
       - detector
-    'vpn.s4a.cert.ee':
+    'vpn.s4a.{{ example.com }}':
       - vpn
     ```
 
-1. Define sls top file definitions:
+1. Define sls top file definitions, by default `/srv/salt/top.sls`:
 
     ```yaml
-    'central.s4a.cert.ee':
+    'central.s4a.{{ example.com }}':
       - vpn.easy-rsa.config
       - beacon
       - central.bundle
-    'es.s4a.cert.ee':
+    'es.s4a.{{ example.com }}':
       - detector.elastic
-    'influx.s4a.cert.ee':
+    'influx.s4a.{{ example.com }}':
       - influx
-    'vpn.s4a.cert.ee':
+    'vpn.s4a.{{ example.com }}':
       - vpn
-    'repo.s4a.cert.ee':
+    'repo.s4a.{{ example.com }}':
       - repo
     ```
 
-1. Restart salt-master: `systemctl restart salt-master.service`
+1. Restart salt-master: `systemctl restart salt-master.service` (To make sure, the reactor definitions are loaded)
 
-1. Highstate repo.s4a.cert.ee:
+1. Highstate repo.s4a.{{ example.com }}:
 
     ```bash
-    salt 'repo.s4a.cert.ee' state.highstate
+    salt 'repo.s4a.{{ example.com }}' state.highstate
     ```
 
 1. Build deb packages using the scripts in the S4A GitHub repository.
-1. Upload them to repo.s4a.cert.ee and register them in the repo:
+1. Upload them to repo.s4a.{{ example.com }} and register them in the repo:
 
     ```bash
-    reprepro -b /srv/repo.s4a.cert.ee/repositories/ includedeb xenial /path/to/debs/*.deb
+    reprepro -b /srv/repo.s4a.{{ example.com }}/repositories/ includedeb xenial /path/to/debs/*.deb
     ```
 
 1. Highstate the servers:
 
     ```bash
-    salt -E '(central|es|influx|keys).s4a.cert.ee' state.highstate
+    salt -E '(central|es|influx|keys).s4a.{{ example.com }}' state.highstate
     ```
 
     1. Now execute certificate transfer state. This will send the ca.crt, ta key and server cert and key, and crl.pem to the salt master
 
     ```bash
-    salt 'central.s4a.cert.ee' state.apply vpn.easy-rsa.send_certs
+    salt 'central.s4a.{{ example.com }}' state.apply vpn.easy-rsa.send_certs
     ```
 
     1. Finally highstate the OpenVPN server.
 
     ```bash
-    salt 'vpn.s4a.cert.ee' state.highstate
+    salt 'vpn.s4a.{{ example.com }}' state.highstate
     ```
 
 1. Done
