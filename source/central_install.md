@@ -13,10 +13,10 @@
 ## Used software
 
 - [SaltStack](https://saltstack.com/)
-- [NodeJS](https://nodejs.org/en/) >= v8
+- [NodeJS](https://nodejs.org/en/) >= ver 10 LTS
 - [Yarn](https://yarnpkg.com/en/)
 - [Pm2](https://github.com/Unitech/pm2)
-- [MongoDB](https://www.mongodb.com/) - version 3.4
+- [MongoDB](https://www.mongodb.com/) - version 4.0
 - [Evebox](https://github.com/jasonish/evebox)
 - [Elasticsearch](https://www.elastic.co/)
 - [OpenVPN](https://openvpn.net/)

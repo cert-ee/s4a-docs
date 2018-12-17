@@ -16,4 +16,5 @@ Contents:
    source/system_overview.md
    source/api_mechanics.md
    source/rules_flow.md
+   source/rules_yara_and_wise.md
    source/development.md

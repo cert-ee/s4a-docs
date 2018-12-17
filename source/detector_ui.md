@@ -40,12 +40,104 @@ Interface to manage and review component states and statuses. Possible actions i
 
 ## 5. Settings
 
-* Alerts: It is possible to manage the verbosity and depth level of information which will be sent to CERT-EE
+* Alerts: It is possible to manage time interval, how often data is pushed and verbosity and depth level of information which will be sent to CERT-EE.
 
-* Rules: Simple setup to trigger automated update of rules.
+* Rules: Simple setup to trigger automated update of rules as well as update pull frequency.
+
+* Moloch Settings: Enable usage of Yara rules and Wise service with the possibility to define custom IP exclusion list.
 
 * Network: Capturing interface(s) reconfiguration.
 
-* NFSen sampling: Sampling rate reconfiguration.
+* General: Allow or disallow Status Report to CERT-EE Central control with push fequency support.
+
+* SMTP server settings: Detector lacks mail relay service, instead full range of SMTP settings has been provided for external SMTP relay exploitation.
+
+* Nginx TLS: Provides possibility to use custom Certificates instead of system default.
 
 ![Settings view](../images/image_7.png)
+
+## 6. Tags
+
+Tag management for tags used in Rule Manager.
+
+![Tag manager](../images/image_13.png)
+
+## 7. Notify
+
+Provides means to configure email notifications based on Suricata alerts. Settings include rule description, destination email address, subject and Elasticsearch query, which
+makes it possible to define highly dynamical rules for alerting.
+
+Notify mechanism supports two types of alerts:
+* Simple alert - based on simple query result count, if > 0, alert is triggered, all found entries will be sent via email. If aggregation has been defined, aggregation alert will be preferred (see next item).
+
+Example query:
+
+    {
+      "query": {
+        "bool": {
+          "must": [
+            {
+              "term": {
+                "alert.severity": 1
+              }
+            }
+          ]
+        }
+      }
+    }
+
+* Aggregation alert - checks for result buckets.length, if > 0, aggregation alert is triggered and message will be sent via email. 
+  For optimal use it's suggested to define '"size": 0' in ES query, as results are irrelevant for aggregation alert.
+
+Example query:
+
+    {
+      "size": 0,
+      "query": {
+        "bool": {
+          "must": [
+            {
+              "range": {
+                "timestamp": {
+                  "gt": "now-60m"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "aggs": {
+        "notify": {
+          "date_histogram": {
+            "field": "@timestamp",
+            "interval": "30m"
+          },
+          "aggs": {
+            "treshold": {
+              "bucket_selector": {
+                "buckets_path": {
+                  "alarms_count": "_count"
+                },
+                "script": "params.alarms_count > 100"
+              }
+            }
+          }
+        }
+      }
+    }
+
+![Notifications](../images/image_11.png)
+
+## 8. User management
+
+Provides means to manage users and view user action log.
+User can have either admin or view only privilege, which translates to subcomponents as well.
+
+![User management](../images/image_12.png)
+
+## 9. Feedback
+
+Send feedback or troubleing issues stright to the Central CORE. Specialists in CERT-EE will see them
+through and provide help if possible.
+
+![User management](../images/image_14.png)
