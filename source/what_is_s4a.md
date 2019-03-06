@@ -3,7 +3,7 @@
 Project is funded by:
 
 ![Euroopa Liit Euroopa Regionaalarengu Fond, Eesti tuleviku heaks](../images/image_0.png)
-![Sisejulgeolekufond](../images/logo2.png)
+![Sisejulgeolekufond](../images/logo02.png)
 
 
 ## Overview
