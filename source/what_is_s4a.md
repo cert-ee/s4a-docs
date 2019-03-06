@@ -2,8 +2,8 @@
 
 Project is funded by:
 
-![Euroopa Liit Euroopa Regionaalarengu Fond, Eesti tuleviku heaks](../images/image_0.png)
-![Sisejulgeolekufond](../images/logo02.png)
+![Euroopa Liit Euroopa Regionaalarengu Fond, Eesti tuleviku heaks](../images/image_0.png =200x)
+![Sisejulgeolekufond](../images/logo02.png =200x)
 
 
 ## Overview
