@@ -2,7 +2,22 @@
 
 ## How to contribute
 
-Coming soon...
+    # clone project
+    git clone git@github.com:cert-ee/s4a-detector.git
+    cd s4a-detector
+    # create new branch
+    git checkout -b new-contribution
+    # add your bugfixes/updates/features and commit them
+    git add . && git commit -m "! nice new feature"
+    # push it to github
+    git push -u origin new-contribution
+    # Create pull request in Github Web Interface
+    xdg-open https://github.com/cert-ee/s4a-detector/compare
+
+    # Cleanup
+    git checkout master
+    git branch -d $(git branch --merged=master | grep -v master)
+    git fetch --prune
 
 ## Development environment
 
